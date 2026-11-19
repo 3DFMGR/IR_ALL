@@ -86,6 +86,9 @@ canvas.sig{width:100%;height:160px;background:#fff;border:1px dashed var(--bd);b
 #cobtns button .logo img{max-width:88px}
 #cobtns button .cn{flex:1;min-width:0;overflow-wrap:anywhere}
 .chip span{min-width:0;overflow-wrap:anywhere}
+.cochip{background:var(--field);font-weight:600;padding:10px 12px}
+.cochip.empty span{color:var(--mut);font-weight:500}
+#coclose{justify-content:center;margin-top:4px}
 .box{background:var(--card);border-radius:14px;padding:18px;width:100%;max-width:400px;display:flex;flex-direction:column;gap:10px;max-height:100%;overflow:auto}
 .box h2{margin:0 0 4px;font-size:18px;text-align:center}
 .box button{display:flex;align-items:center;gap:12px;background:var(--field);color:var(--tx);border:1px solid var(--bd);text-align:left}
@@ -154,16 +157,16 @@ canvas.sig{width:100%;height:160px;background:#fff;border:1px dashed var(--bd);b
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mt"><div class="box"><h2 id="mt">Επίλεξε εταιρεία</h2><div id="cobtns" class="actions"></div></div></div>
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="mt" hidden><div class="box"><h2 id="mt">Επίλεξε εταιρεία</h2><div id="cobtns" class="actions"></div><button class="sec" id="coclose" type="button">Κλείσιμο</button></div></div>
 
 <div class="wrap">
   <div class="head"><div id="hlogo"></div><h1>Δελτίο Εργασιών</h1></div>
-  <div class="chip"><span id="co">Καμία εταιρεία</span><button id="chg" type="button">Αλλαγή</button></div>
 
   <div class="card">
     <h2>ΣΤΟΙΧΕΙΑ</h2>
-    <label for="date">Ημερομηνία</label><input id="date" type="date">
     <label for="client">Πελάτης *</label><input id="client" placeholder="Γράψε ή πάτα ▾ για λίστα">
+    <label>Εταιρεία</label><div class="chip cochip"><span id="co"></span><button id="chg" type="button">Αλλαγή</button></div><div class="hint" id="cohint"></div>
+    <label for="date">Ημερομηνία</label><input id="date" type="date">
     <label for="addr">Διεύθυνση / Χώρος εργασίας</label><input id="addr" placeholder="Γράψε ή πάτα ▾ για λίστα"><div class="hint" id="ahint"></div>
     <label for="email">Email πελάτη</label><input id="email" type="email" inputmode="email" placeholder="π.χ. info@pelatis.gr">
     <label for="fm">Υπεύθυνος συντήρησης / Facility manager</label><input id="fm" autocomplete="off">
@@ -336,15 +339,35 @@ function logoEl(c,big){
   else{d.style.background=c.color;d.style.padding='0 10px';d.textContent=c.short}
   return d;
 }
-let company=null;
-function pick(c){
-  company=c;store.set('company',c.name);
-  $('co').textContent=c.name;$('hlogo').replaceChildren(logoEl(c,true));
-  $('modal').hidden=true;pads.forEach(p=>p.init());
-  fillClients();onClient();
+let company=null,companyAuto=false,lastAutoClient='',companyFor='';
+function setCompany(c,auto){
+  company=c;companyAuto=!!(c&&auto);
+  $('co').textContent=c?c.name:'Ορίζεται αυτόματα όταν διαλέξεις πελάτη';
+  $('chg').textContent=c?'Αλλαγή':'Επιλογή';
+  document.querySelector('.cochip').classList.toggle('empty',!c);
+  $('cohint').textContent=c?(auto?'Ορίστηκε αυτόματα από τον πελάτη.':''):'';
+  if(c)$('hlogo').replaceChildren(logoEl(c,true));else $('hlogo').replaceChildren();
+  pads.forEach(p=>p.init());
 }
-COMPANIES.forEach(c=>{const b=document.createElement('button'),t=document.createElement('span');b.type='button';t.className='cn';t.textContent=c.name;b.append(logoEl(c),t);b.onclick=()=>pick(c);$('cobtns').append(b)});
-$('chg').onclick=()=>{$('modal').hidden=false};
+function pick(c){setCompany(c,false);companyFor=lastAutoClient;$('modal').hidden=true}
+function openCompanies(list,title){
+  $('mt').textContent=title||'Επίλεξε εταιρεία';
+  $('cobtns').replaceChildren(...list.map(c=>{const b=document.createElement('button'),t=document.createElement('span');
+    b.type='button';t.className='cn';t.textContent=c.name;b.append(logoEl(c),t);b.onclick=()=>pick(c);return b}));
+  $('modal').hidden=false;
+}
+/* ο πελάτης ορίζει την εταιρεία: μία → αυτόματα, περισσότερες → επιλογή ανάμεσά τους */
+function autoCompany(){
+  const c=findClient(),key=c?c.name:'';
+  if(key===lastAutoClient)return;lastAutoClient=key;
+  const cos=c?COMPANIES.filter(x=>c.co.includes(x.name)):[];
+  if(cos.length===1){setCompany(cos[0],true);return}
+  if(companyAuto||(company&&companyFor&&companyFor!==key))setCompany(null);
+  if(cos.length>1)openCompanies(cos,'Ο πελάτης εξυπηρετείται από '+cos.length+' εταιρείες. Διάλεξε:');
+}
+$('chg').onclick=()=>openCompanies(COMPANIES);
+$('coclose').onclick=()=>{$('modal').hidden=true};
+$('modal').addEventListener('click',e=>{if(e.target.id==='modal')$('modal').hidden=true});
 
 /* ===== πελάτες, διευθύνσεις, τεχνικοί ===== */
 const uniq=a=>[...new Set(a)];
@@ -352,9 +375,10 @@ const byEl=(x,y)=>x.localeCompare(y,'el',{sensitivity:'base'});
 const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 let autoAddr='',autoTech='',curTechs=[];
 const findClient=()=>{const v=$('client').value.trim().toLowerCase();return v?CLIENTS.find(x=>x.name.toLowerCase()===v):null};
-function clientsFor(){if(!company)return CLIENTS;const mine=CLIENTS.filter(c=>c.co.includes(company.name));return mine.length?mine:CLIENTS}
+function clientsFor(){return CLIENTS}
 function fillClients(){}
 function onClient(){
+  autoCompany();
   const c=findClient();
   if($('addr').value===autoAddr){$('addr').value='';autoAddr=''}
   if(c&&c.addrs.length===1&&!$('addr').value){$('addr').value=autoAddr=c.addrs[0]}
@@ -562,8 +586,8 @@ function collect(){
 let lastPdf=null,lastName='';
 $('make').onclick=async()=>{
   const d=collect();
-  if(!company){say('Διάλεξε πρώτα εταιρεία.','err');$('modal').hidden=false;return}
-  if(!d.client){say('Συμπλήρωσε τον πελάτη.','err');$('client').focus();return}
+  if(!d.client){say('Συμπλήρωσε τον πελάτη.','err');$('client').scrollIntoView({block:'center'});return}
+  if(!company){say('Διάλεξε εταιρεία για αυτόν τον πελάτη.','err');openCompanies(COMPANIES,'Διάλεξε εταιρεία για τον πελάτη');return}
   if(!window.jspdf||!window.html2canvas){say('Δεν φορτώθηκε το εργαλείο PDF. Άνοιξε ξανά την εφαρμογή.','err');return}
   $('make').disabled=true;say('Δημιουργία PDF…');
   try{
@@ -626,15 +650,11 @@ $('no2').onclick=()=>{$('confirm').hidden=true;$('newb').hidden=false};
 $('yes').onclick=()=>{ids.forEach(i=>$(i).value='');$('date').value=today();
   document.querySelectorAll('.ck input').forEach(c=>c.checked=false);
   tasks.slice().forEach(r=>r.el.remove());tasks.length=0;mats.slice().forEach(r=>r.el.remove());mats.length=0;addTask();addMat();
-  autoAddr='';autoTech='';onClient();photos.length=0;drawThumbs();pads.forEach(p=>p.clear());lastPdf=null;$('done').hidden=true;say('');
+  autoAddr='';autoTech='';lastAutoClient='';setCompany(null);onClient();photos.length=0;drawThumbs();pads.forEach(p=>p.clear());lastPdf=null;$('done').hidden=true;say('');
   $('confirm').hidden=true;$('newb').hidden=false;window.scrollTo(0,0)};
 
+setCompany(null);
 fillClients();onClient();
-const OLD={'ALTER EGO':'ALTER EGO ΑΕ','MODULE FACILITIES':'MODULE FACILITY MANAGEMENT ΙΚΕ','LABOLAGET':'LA BOLAGET FM','ELITE GROUP FMS':'EG FMS','3D FACILITIES':'THREE D 3D FACILITY MANAGEMENT ΙΚΕ'};
-const saved=OLD[store.get('company')]||store.get('company');
-const last=COMPANIES.find(c=>c.name===saved);
-if(last)pick(last);
-$('modal').hidden=!!company;
 
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
