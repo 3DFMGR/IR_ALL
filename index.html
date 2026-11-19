@@ -285,7 +285,7 @@ const CRIT=['Θερμές εργασίες (κοπή, συγκόλληση, τρ
   'Εργασίες σε ύψος','Απομόνωση συστήματος πυρόσβεσης'];
 
 const $=id=>document.getElementById(id);
-const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const store={get(k){try{return localStorage.getItem('irall:'+k)}catch(e){return null}},set(k,v){try{localStorage.setItem('irall:'+k,v)}catch(e){}}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ids=['date','client','addr','email','fm','tech','desc','notes','ppe_o1','ppe_o2','crit_o','signer'];
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
