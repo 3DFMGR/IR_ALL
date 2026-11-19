@@ -1,6 +1,6 @@
 /* Αποθηκεύει την εφαρμογή στο κινητό ώστε να δουλεύει χωρίς σήμα.
    Όταν αλλάζετε κάτι, ανεβάστε την έκδοση (VERSION) για να ενημερωθούν τα κινητά. */
-const VERSION='deltio-all-v6';
+const VERSION='deltio-all-v7';
 const FILES=[
   './',
   'fonts.css',
