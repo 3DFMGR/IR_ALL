@@ -181,7 +181,6 @@ canvas.sig{width:100%;height:160px;background:#fff;border:1px dashed var(--bd);b
     <label>Εταιρεία</label><div class="chip cochip"><span id="co"></span><button id="chg" type="button">Αλλαγή</button></div><div class="hint" id="cohint"></div>
     <label for="date">Ημερομηνία</label><input id="date" type="date">
     <label for="addr">Διεύθυνση / Χώρος εργασίας</label><input id="addr" placeholder="Γράψε ή πάτα ▾ για λίστα"><div class="hint" id="ahint"></div>
-    <label for="email">Email πελάτη</label><input id="email" type="email" inputmode="email" placeholder="π.χ. info@pelatis.gr">
     <label for="fm">Υπεύθυνος συντήρησης / Facility manager</label><input id="fm" autocomplete="off">
     <label for="tech">Τεχνικός / Technician</label><input id="tech" placeholder="Γράψε ή πάτα ▾ για λίστα">
   </div>
@@ -282,8 +281,6 @@ canvas.sig{width:100%;height:160px;background:#fff;border:1px dashed var(--bd);b
       <div class="hint" id="linkinfo">Όποιος ανοίξει το link βλέπει το δελτίο και κατεβάζει το PDF.</div>
       <textarea id="linkbox" readonly hidden style="min-height:70px;font-size:12px"></textarea>
     </div>
-    <label for="eto">Προς</label>
-    <div class="copyrow"><input id="eto" readonly><button class="sec" type="button" data-copy="eto">Αντιγραφή</button></div>
     <label for="esub">Θέμα</label>
     <div class="copyrow"><input id="esub" readonly><button class="sec" type="button" data-copy="esub">Αντιγραφή</button></div>
     <label for="ebody">Κείμενο email</label>
@@ -339,7 +336,7 @@ const CRIT=['Θερμές εργασίες (κοπή, συγκόλληση, τρ
 const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem('irall:'+k)}catch(e){return null}},set(k,v){try{localStorage.setItem('irall:'+k,v)}catch(e){}}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const ids=['date','client','addr','email','fm','tech','desc','notes','ppe_o1','ppe_o2','crit_o','signer'];
+const ids=['date','client','addr','fm','tech','desc','notes','ppe_o1','ppe_o2','crit_o','signer'];
 const today=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const grDate=s=>s?s.split('-').reverse().join('/'):'';
 /* Ημερομηνίες πάντα ηη/μμ/εεεε, ανεξάρτητα από τη γλώσσα του κινητού.
@@ -733,7 +730,6 @@ function finishOut(d){
 const safe=s=>s.replace(/[\\/:*?"<>|]+/g,' ').replace(/\s+/g,'_').slice(0,40);
   const FN={'MODULE':'MODULE','ALTER EGO ΑΕ':'ALTER_EGO','3DFM':'3DFM','EG FMS':'EG_FMS','LA BOLAGET FM':'LA_BOLAGET','AIR2AIR':'AIR2AIR'};
   lastName=['IR',FN[company.name]||safe(company.name),safe(d.client),safe(d.tech),grDate(d.vdate).replace(/\//g,'-')].filter(Boolean).join('_')+'.pdf';
-  $('eto').value=d.email;
   $('esub').value='Δελτίο Εργασιών ΔΕ '+grDate(d.vdate)+' – '+d.client;
   $('ebody').value='Καλησπέρα σας,\n\nσας αποστέλλουμε συνημμένο το Δελτίο Εργασιών ΔΕ '+grDate(d.vdate)+
     (d.addr?' για τις εργασίες στο '+d.addr:'')+'.\n\nΜε εκτίμηση,\n'+company.name;
